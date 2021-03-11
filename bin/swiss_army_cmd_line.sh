@@ -17,6 +17,9 @@ pip3 install pytz-*.whl numpy-*.whl pandas-*.whl
 # remove installation packages so they don't get uploaded
 rm -f *.whl
 
-python3 mutect2_vcf_2_BSVI.py *vcf
+vcf=$(find . -name "*.vcf*")
+
+# call Python script to normalise and generate new VCF
+python3 mutect2_vcf_2_BSVI.py $vcf
 
 echo "Done"
