@@ -28,9 +28,9 @@ Knife app (v.4.1.1).
 
 To run with Swiss Army Knife app:
 - Inputs:
-    - python_packages.tar,gz
-        - pandas, numpy, & pytz
+    - python_packages.tar,gz (pandas, numpy, & pytz)
     - mutect2_vcf_2-BSVI.py
+    - swiss_army_cmd_line.sh
     - mutect2 VCF
 
 - CMD to run: `sh swiss_army_cmd_line.sh`
