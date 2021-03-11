@@ -101,7 +101,6 @@ def write_file(input_vcf, vcf_header, vcf_df):
             # write header to vcf
             f.write(line)
 
-
     # apend variants to vcf & compress
     with open(fname, 'a') as f:
         vcf_df.to_csv(f, sep='\t', header=False, index=False)
