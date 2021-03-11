@@ -13,7 +13,7 @@ than 2 entries in genotype field.
 ## What are typical use cases for this?
 
 Takes output VCF of mutect2, splits multiallelic variants into individual
-biallelic lines using [bcftools norm][bcftools-url] then changes genotype
+biallelic records using [bcftools norm][bcftools-url], then modifies genotype
 entries to `0/1`.
 
 To add as part of DNAnexus workflow this should be used with the Swiss Army
