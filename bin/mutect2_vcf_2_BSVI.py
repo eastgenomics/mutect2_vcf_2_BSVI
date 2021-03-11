@@ -8,9 +8,7 @@ Requires bcftools be installed and on path.
 Jethro Rainford
 210311
 """
-import argparse
 import io
-import os
 from pathlib import Path
 from shutil import which
 import subprocess
