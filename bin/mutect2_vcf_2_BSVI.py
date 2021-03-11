@@ -92,7 +92,11 @@ def write_file(input_vcf, vcf_header, vcf_df):
     Outputs:
         - vcf file with modified multiallelic records
     """
-    fname = str(Path(input_vcf).name).replace('.vcf', '_multiallelic_split.vcf')
+    # set name for output vcf from input
+    fname = str(Path(input_vcf).name).replace(
+        '.vcf', '_multiallelic_split.vcf').rstrip('.gz')
+
+    print(f'Writing to outfile: {fname}.gz')
 
     f = open(fname, 'w')
 
@@ -100,8 +104,9 @@ def write_file(input_vcf, vcf_header, vcf_df):
         # write header to vcf
         f.write(line)
 
-    # write variants to vcf
+    # write variants to vcf & compress
     vcf_df.to_csv(fname, mode='a', sep='\t', header=False)
+    subprocess.Popen(f'gzip {fname}', shell=True)
 
 
 if __name__ == "__main__":
