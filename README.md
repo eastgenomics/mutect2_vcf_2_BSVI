@@ -13,7 +13,11 @@ than 2 entries in genotype field.
 ## What are typical use cases for this?
 
 Takes output VCF of mutect2, splits multiallelic variants into individual
-biallelic lines using [bcftools norm][bcftools-url] then changes genotype entries to `0/1`.
+biallelic lines using [bcftools norm][bcftools-url] then changes genotype
+entries to `0/1`.
+
+To add as part of DNAnexus workflow this should be used with the Swiss Army
+Knife app (v.4.1.1). 
 
 
 ## What is required for this to run?
@@ -21,6 +25,15 @@ biallelic lines using [bcftools norm][bcftools-url] then changes genotype entrie
 - Python 3.x
 - pandas
 - bcftools
+
+To run with Swiss Army Knife app:
+- Inputs:
+    - python_packages.tar,gz
+        - pandas, numpy, & pytz
+    - mutect2_vcf_2-BSVI.py
+    - mutect2 VCF
+
+- CMD to run: `sh swiss_army_cmd_line.sh`
 
 
 ## What does this output?
