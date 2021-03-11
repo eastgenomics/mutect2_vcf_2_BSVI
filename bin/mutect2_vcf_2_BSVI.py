@@ -96,14 +96,16 @@ def write_file(input_vcf, vcf_header, vcf_df):
 
     print(f'Writing to outfile: {fname}.gz')
 
-    f = open(fname, 'w')
+    with open(fname, 'w') as f:
+        for line in vcf_header:
+            # write header to vcf
+            f.write(line)
 
-    for line in vcf_header:
-        # write header to vcf
-        f.write(line)
 
-    # write variants to vcf & compress
-    vcf_df.to_csv(fname, mode='a', sep='\t', header=False)
+    # apend variants to vcf & compress
+    with open(fname, 'a') as f:
+        vcf_df.to_csv(f, sep='\t', header=False, index=False)
+
     subprocess.Popen(f'gzip {fname}', shell=True)
 
 
