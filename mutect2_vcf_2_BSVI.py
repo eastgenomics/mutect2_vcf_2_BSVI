@@ -64,9 +64,10 @@ def bcf_norm(input_vcf):
         # loop over rows, change genotype if contains greater than 2 fields
         sample = row['SAMPLE'].split(':')
 
-        # sense check that genotype field doesn't have anything funky
+        # sense check that genotype field doesn't have anything funky,
+        # if it does then it can be reviewed manually
         assert len(sample[0]) >= 3, \
-            f'Genotype field has <3 characters: {sample[0]}'
+            f'Genotype field has < 3 characters: {sample[0]}'
 
         if len(sample[0]) > 3:
             # >3 => not 0/1 => modify
