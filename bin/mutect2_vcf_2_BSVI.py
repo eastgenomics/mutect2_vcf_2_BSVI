@@ -110,7 +110,11 @@ def write_file(input_vcf, vcf_header, vcf_df):
 
 if __name__ == "__main__":
 
-    assert which('bcftools')  # check bcftools is installed and on path
+    # check bcftools is installed and on path
+    assert which('bcftools'), 'bcftools is not installed / on path'
+
+    # check only one vcf passed
+    assert len(sys.argv) <= 2, 'More than one VCF passed.'
 
     input_vcf = sys.argv[1]
     vcf_header, vcf_df = bcf_norm(input_vcf)
