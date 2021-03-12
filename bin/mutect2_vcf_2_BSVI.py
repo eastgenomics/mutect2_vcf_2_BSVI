@@ -3,7 +3,7 @@ Script to modify VCFs from mutect2 for importing to BSVI.
 Multiallelic sites need splitting to individual biallelic records, and
 the genotype fields splitting from 0/0/1/0 -> 0/1 for BSVI to handle.
 
-Requires bcftools be installed and on path.
+Requires bgzip & bcftools be installed and on path.
 
 Jethro Rainford
 210311
@@ -105,7 +105,7 @@ def write_file(input_vcf, vcf_header, vcf_df):
     with open(fname, 'a') as f:
         vcf_df.to_csv(f, sep='\t', header=False, index=False)
 
-    subprocess.Popen(f'gzip {fname}', shell=True)
+    subprocess.Popen(f'bgzip {fname}', shell=True)
 
 
 if __name__ == "__main__":

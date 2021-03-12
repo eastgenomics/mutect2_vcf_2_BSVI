@@ -25,6 +25,7 @@ Knife app (v.4.1.1).
 - Python 3.x
 - pandas
 - bcftools
+- bgzip
 
 To run with Swiss Army Knife app:
 - Inputs:
