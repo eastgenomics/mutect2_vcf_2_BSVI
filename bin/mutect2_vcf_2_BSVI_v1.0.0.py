@@ -120,7 +120,7 @@ def write_file(input_vcf, vcf_header, vcf_df, custom_annot):
     subprocess.Popen(f'bgzip {fname}', shell=True)
 
     # write custom annotation file
-    annot_fname = fname.replace('.vcf', '_annotation.tsv')
+    annot_fname = fname.replace('.vcf', '_annotation.txt')
 
     with open(annot_fname, 'w') as f:
         custom_annot.to_csv(f, sep='\t', header=True, index=False)
