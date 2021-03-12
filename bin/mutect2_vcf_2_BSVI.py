@@ -65,7 +65,7 @@ def bcf_norm(input_vcf):
         # sense check that genotype field doesn't have anything funky,
         # if it does then it can be reviewed manually
         assert len(sample[0]) >= 3, \
-            f'Genotype field has < 3 characters: {sample[0]}'
+            f'Genotype field has < 3 characters: {sample[0]} for sample: {row}'
 
         if len(sample[0]) > 3:
             # >3 => not 0/1 => modify
