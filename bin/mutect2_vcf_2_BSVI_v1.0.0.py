@@ -57,6 +57,11 @@ def bcf_norm(input_vcf):
     # read normalised vcf into df
     vcf_df = pd.read_csv(vcf_data, sep="\t", comment='#', names=cols)
 
+    # empty df to build custom annotation file for BSVI
+    custom_annot = pd.DataFrame(columns=[
+        'Chr', 'Start', 'Ref', 'Alt', 'Annotation'
+    ])
+
     print('Adjusting multiallelic genotypes')
     for index, row in vcf_df.iterrows():
         # loop over rows, change genotype if contains greater than 2 fields
@@ -75,10 +80,17 @@ def bcf_norm(input_vcf):
             # write new entry back to row
             vcf_df.at[index, 'SAMPLE'] = sample
 
-    return vcf_header, vcf_df
+            # add variant to annotation df
+            custom_annot = custom_annot.append({
+                'Chr': row['CHROM'], 'Start': row['POS'],
+                'Ref': row['REF'], 'Alt': row['ALT'],
+                'Annotation': 'MULTI ALLELIC VARIANT'
+            }, ignore_index=True)
+
+    return vcf_header, vcf_df, custom_annot
 
 
-def write_file(input_vcf, vcf_header, vcf_df):
+def write_file(input_vcf, vcf_header, vcf_df, custom_annot):
     """
     Write modified vcf to file
 
@@ -107,6 +119,12 @@ def write_file(input_vcf, vcf_header, vcf_df):
 
     subprocess.Popen(f'bgzip {fname}', shell=True)
 
+    # write custom annotation file
+    annot_fname = fname.replace('.vcf', '_annotation.tsv')
+
+    with open(annot_fname, 'w') as f:
+        custom_annot.to_csv(f, sep='\t', header=True, index=False)
+
 
 if __name__ == "__main__":
 
@@ -117,5 +135,5 @@ if __name__ == "__main__":
     assert len(sys.argv) == 2, 'Incorrect no. VCFs passed, requires one.'
 
     input_vcf = sys.argv[1]
-    vcf_header, vcf_df = bcf_norm(input_vcf)
-    write_file(input_vcf, vcf_header, vcf_df)
+    vcf_header, vcf_df, custom_annot = bcf_norm(input_vcf)
+    write_file(input_vcf, vcf_header, vcf_df, custom_annot)
