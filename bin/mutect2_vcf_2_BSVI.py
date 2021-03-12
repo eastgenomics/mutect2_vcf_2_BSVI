@@ -114,7 +114,7 @@ if __name__ == "__main__":
     assert which('bcftools'), 'bcftools is not installed / on path'
 
     # check only one vcf passed
-    assert len(sys.argv) <= 2, 'More than one VCF passed.'
+    assert len(sys.argv) == 2, 'Incorrect no. VCFs passed, requires one.'
 
     input_vcf = sys.argv[1]
     vcf_header, vcf_df = bcf_norm(input_vcf)
