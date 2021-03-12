@@ -40,7 +40,7 @@ def bcf_norm(input_vcf):
     vcf_header = []
 
     for line in process.stdout:
-        line = line.decode().strip('"\n') + '\n'
+        line = line.decode()
         vcf_data.write(line)
 
         if line.startswith('#'):
