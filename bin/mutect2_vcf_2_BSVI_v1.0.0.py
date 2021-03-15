@@ -57,11 +57,6 @@ def bcf_norm(input_vcf):
     # read normalised vcf into df
     vcf_df = pd.read_csv(vcf_data, sep="\t", comment='#', names=cols)
 
-    # empty df to build custom annotation file for BSVI
-    custom_annot = pd.DataFrame(columns=[
-        'Chr', 'Start', 'Ref', 'Alt', 'Annotation'
-    ])
-
     print('Adjusting multiallelic genotypes')
     for index, row in vcf_df.iterrows():
         # loop over rows, change genotype if contains greater than 2 fields
@@ -77,10 +72,10 @@ def bcf_norm(input_vcf):
             sample[0] = '0/1'
             sample = ':'.join(sample)
 
-    return vcf_header, vcf_df, custom_annot
+    return vcf_header, vcf_df
 
 
-def write_file(input_vcf, vcf_header, vcf_df, custom_annot):
+def write_file(input_vcf, vcf_header, vcf_df):
     """
     Write modified vcf to file
 
@@ -119,5 +114,5 @@ if __name__ == "__main__":
     assert len(sys.argv) == 2, 'Incorrect no. VCFs passed, requires one.'
 
     input_vcf = sys.argv[1]
-    vcf_header, vcf_df, custom_annot = bcf_norm(input_vcf)
-    write_file(input_vcf, vcf_header, vcf_df, custom_annot)
+    vcf_header, vcf_df = bcf_norm(input_vcf)
+    write_file(input_vcf, vcf_header, vcf_df)
