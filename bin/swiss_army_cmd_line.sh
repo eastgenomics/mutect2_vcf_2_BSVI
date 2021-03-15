@@ -20,6 +20,6 @@ rm -f *.whl
 vcf=$(find . -name "*.vcf*")
 
 # call Python script to normalise and generate new VCF
-python3 mutect2_vcf_2_BSVI.py $vcf
+python3 mutect2_vcf_2_BSVI_v1.0.0.py $vcf
 
 echo "Done"
