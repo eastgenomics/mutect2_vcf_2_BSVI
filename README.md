@@ -14,7 +14,7 @@ than 2 entries in genotype field.
 
 Takes output VCF of mutect2, splits multiallelic variants into individual
 biallelic records using [bcftools norm][bcftools-url], then modifies genotype
-entries to `./1`.
+entries to `0/1`.
 
 To add as part of DNAnexus workflow this should be used with the Swiss Army
 Knife app (v.4.1.1). 
