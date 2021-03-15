@@ -63,7 +63,7 @@ def bcf_norm(input_vcf):
     ])
 
     # list of valid chromosomes for annotation file
-    chroms = [str(x) for x in range(0, 23)] + ['X', 'Y', 'MT']
+    chroms = [str(x) for x in range(0, 23)] + ['X', 'Y', 'M']
 
     print('Adjusting multiallelic genotypes')
     for index, row in vcf_df.iterrows():
