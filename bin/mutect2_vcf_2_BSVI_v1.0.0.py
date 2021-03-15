@@ -62,6 +62,9 @@ def bcf_norm(input_vcf):
         'Chr', 'Start', 'Ref', 'Alt', 'Annotation'
     ])
 
+    # list of valid chromosomes for annotation file
+    chroms = [str(x) for x in range(0, 23)] + ['X', 'Y', 'MT']
+
     print('Adjusting multiallelic genotypes')
     for index, row in vcf_df.iterrows():
         # loop over rows, change genotype if contains greater than 2 fields
@@ -77,15 +80,18 @@ def bcf_norm(input_vcf):
             sample[0] = '0/1'
             sample = ':'.join(sample)
 
-            # write new entry back to row
-            vcf_df.at[index, 'SAMPLE'] = sample
+            row_chr = row['CHROM'].strip('chr')
 
-            # add variant to annotation df
-            custom_annot = custom_annot.append({
-                'Chr': row['CHROM'], 'Start': row['POS'],
-                'Ref': row['REF'], 'Alt': row['ALT'],
-                'Annotation': 'MULTI ALLELIC VARIANT'
-            }, ignore_index=True)
+            # write new entry back to row if valid chrom
+            if row_chr in chroms:
+                vcf_df.at[index, 'SAMPLE'] = sample
+
+                # add variant to annotation df
+                custom_annot = custom_annot.append({
+                    'Chr': row_chr, 'Start': row['POS'],
+                    'Ref': row['REF'], 'Alt': row['ALT'],
+                    'Annotation': 'MULTI ALLELIC VARIANT'
+                }, ignore_index=True)
 
     return vcf_header, vcf_df, custom_annot
 
