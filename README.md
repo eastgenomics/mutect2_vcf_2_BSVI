@@ -39,6 +39,6 @@ To run with Swiss Army Knife app:
 
 ## What does this output?
 
-Modified VCF and custom annotation file to import into BSVI.
+Modified VCF to import into BSVI.
 
 [bcftools-url]: http://samtools.github.io/bcftools/bcftools.html#norm
