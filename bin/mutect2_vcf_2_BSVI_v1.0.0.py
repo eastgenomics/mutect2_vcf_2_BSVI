@@ -72,6 +72,9 @@ def bcf_norm(input_vcf):
             sample[0] = '0/1'
             sample = ':'.join(sample)
 
+            # write new entry back to row
+            vcf_df.at[index, 'SAMPLE'] = sample
+
     return vcf_header, vcf_df
 
 
