@@ -54,10 +54,6 @@ def bcf_norm(input_vcf):
         "FORMAT", "SAMPLE"
     ]
 
-    dtypes = {
-        'sample': str
-    }
-
     # read normalised vcf into df
     vcf_df = pd.read_csv(vcf_data, sep="\t", comment='#', names=cols)
 
