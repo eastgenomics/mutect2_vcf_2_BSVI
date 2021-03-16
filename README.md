@@ -16,7 +16,7 @@ Takes output VCF of mutect2, splits multiallelic variants into individual
 biallelic records using [bcftools norm][bcftools-url], then modifies genotype
 entries to `./1`.
 
-n.b. this ONLY changes the genotype field in the sample info, this does NOT modify the AD which will retain all alt depths and therefore should not be used.
+n.b. this ONLY changes the genotype field in the sample info, this does NOT modify any of the other allele specific fields (i.e. AD) which will retain entires from all refs and therefore should not be used.
 
 To add as part of DNAnexus workflow this should be used with the Swiss Army
 Knife app (v.4.1.1). 
