@@ -54,6 +54,10 @@ def bcf_norm(input_vcf):
         "FORMAT", "SAMPLE"
     ]
 
+    dtypes = {
+        'sample': str
+    }
+
     # read normalised vcf into df
     vcf_df = pd.read_csv(vcf_data, sep="\t", comment='#', names=cols)
 
@@ -71,6 +75,9 @@ def bcf_norm(input_vcf):
             # >3 => not 0/1 => modify
             sample[0] = '0/1'
             sample = ':'.join(sample)
+
+            # write new entry back to row if valid chrom
+            vcf_df.at[index, 'SAMPLE'] = sample
 
     return vcf_header, vcf_df
 
