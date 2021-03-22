@@ -92,7 +92,7 @@ def write_file(input_vcf, vcf_header, vcf_df):
     """
     # set name for output vcf from input
     fname = str(Path(input_vcf).name).replace(
-        '.vcf', '_multiallelic_split.vcf').rstrip('.gz')
+        '.vcf', '_ms').rstrip('.gz').replace('ngr_', '').replace('_markdup_recalibrated', '')
 
     print(f'Writing to outfile: {fname}.gz')
 
