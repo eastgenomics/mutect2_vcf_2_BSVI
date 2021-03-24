@@ -89,14 +89,16 @@ def write_file(input_vcf, vcf_header, vcf_df):
 
     Outputs:
         - vcf file with modified multiallelic records
-
+    """
+    # set name for output vcf from input
+    """
     Output vcf name comments:
         - Output vcf name shortened to keep only meaningful characters; removing ngr_ prefix and markdup_recalibrated 
         - Add _ms suffix to denote that vcf has multiallelic variants split to separate lines
         e.g.Input vcf: ngr_1701389_S77_L007_markdup_recalibrated_tnhaplotyper2.vcf.gz 
         Output vcf: 1701389_S77_L007_tnhaplotyper2_ms.vcf.gz
     """
-    # set name for output vcf from input
+    
     fname = str(Path(input_vcf).name).replace(
         '.vcf', '_ms.vcf').rstrip('.gz').replace('ngr_', '').replace('_markdup_recalibrated', '')
 
