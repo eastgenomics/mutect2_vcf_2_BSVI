@@ -16,7 +16,8 @@ Takes output VCF of mutect2, splits multiallelic variants into individual
 biallelic records using [bcftools norm][bcftools-url], then modifies genotype
 entries to `0/1`.
 
-n.b. this ONLY changes the genotype field in the sample info, this does NOT modify any of the other allele specific fields (i.e. AD) which will retain entires from all refs and therefore should not be used.
+This should correctly split all multi allelic records into biallelic ones, with the
+alt specific records split out to the appropriate new record.
 
 To add as part of DNAnexus workflow this should be used with the Swiss Army
 Knife app (v.4.1.1). 
@@ -34,6 +35,7 @@ To run with Swiss Army Knife app:
     - python_packages.tar.gz (contains: pandas, numpy, & pytz)
     - mutect2_vcf_2_BSVI_v*_.py
     - swiss_army_cmd_line_v*_.sh
+    - reference fasta file
     - mutect2 VCF
 
 - CMD to run: `sh swiss_army_cmd_line_v*.sh`

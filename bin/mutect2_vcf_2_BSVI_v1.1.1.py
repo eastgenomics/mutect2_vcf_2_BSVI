@@ -5,6 +5,10 @@ the genotype fields splitting from 0/0/1/0 -> 0/1 for BSVI to handle.
 
 Requires bgzip & bcftools be installed and on path.
 
+Inputs:
+    - reference fasta file - required by bcftools norm
+    - input VCF to be modified
+
 Jethro Rainford
 210311
 """
@@ -17,11 +21,12 @@ import sys
 import pandas as pd
 
 
-def bcf_norm(input_vcf):
+def bcf_norm(ref_fasta, input_vcf):
     """
     Normalise multiallelic records using bcftools norm
 
     Args:
+        - ref_fasta (file): reference fasta file to use for bcftools norm
         - input_vcf (file): vcf file passed at cmd line
 
     Returns:
@@ -31,9 +36,10 @@ def bcf_norm(input_vcf):
     print("Calling bcftools")
 
     # call bcftools to normalise multiallelic sites
-    process = subprocess.Popen(
-        f'bcftools norm -m -both {input_vcf}', shell=True, stdout=subprocess.PIPE
-    )
+    process = subprocess.Popen((
+        f"zcat {input_vcf} | sed 's/AD,Number=./AD,Number=R/g' | bcftools "
+        f"norm -f {ref_fasta} -m -any"
+    ), shell=True, stdout=subprocess.PIPE)
 
     vcf_data = io.StringIO()
 
@@ -93,14 +99,16 @@ def write_file(input_vcf, vcf_header, vcf_df):
     # set name for output vcf from input
     """
     Output vcf name comments:
-        - Output vcf name shortened to keep only meaningful characters; removing ngr_ prefix and markdup_recalibrated 
-        - Add _ms suffix to denote that vcf has multiallelic variants split to separate lines
-        e.g.Input vcf: ngr_1701389_S77_L007_markdup_recalibrated_tnhaplotyper2.vcf.gz 
-        Output vcf: 1701389_S77_L007_tnhaplotyper2_ms.vcf.gz
+        - Output vcf name shortened to keep only meaningful characters
+        - Removing ngr_ prefix and markdup_recalibrated 
+        - Add _ms suffix to denote that vcf has multiallelic variants
+          split to separate lines e.g. 
+          Input vcf: ngr_1701389_S77_markdup_recalibrated_tnhaplotyper2.vcf.gz 
+          Output vcf: 1701389_S77_tnhaplotyper2_ms.vcf.gz
     """
     
-    fname = str(Path(input_vcf).name).replace(
-        '.vcf', '_ms.vcf').rstrip('.gz').replace('ngr_', '').replace('_markdup_recalibrated', '')
+    fname = str(Path(input_vcf).name).replace('.vcf', '_ms.vcf').rstrip(
+        '.gz').replace('ngr_', '').replace('_markdup_recalibrated', '')
 
     print(f'Writing to outfile: {fname}.gz')
 
@@ -121,9 +129,17 @@ if __name__ == "__main__":
     # check bcftools is installed and on path
     assert which('bcftools'), 'bcftools is not installed / on path'
 
-    # check only one vcf passed
-    assert len(sys.argv) == 2, 'Incorrect no. VCFs passed, requires one.'
+    # check only reference fasta and one vcf passed
+    assert len(sys.argv) == 3, 'Incorrect no. VCFs passed, requires one.'
 
-    input_vcf = sys.argv[1]
-    vcf_header, vcf_df = bcf_norm(input_vcf)
+    # check reference fasta and vcf are passed correctly
+    assert '.fa' in sys.argv[1] and '.vcf' in sys.argv[2], (
+        'Files passed incorrectly, it should be:'
+        ' python3 mutect2_vcf_2_bsvi.py reference_fasta input_vcf'
+    )
+
+    ref_fasta = sys.argv[1]
+    input_vcf = sys.argv[2]
+
+    vcf_header, vcf_df = bcf_norm(ref_fasta, input_vcf)
     write_file(input_vcf, vcf_header, vcf_df)
