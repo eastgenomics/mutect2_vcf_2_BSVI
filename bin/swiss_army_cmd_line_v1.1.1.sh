@@ -12,6 +12,7 @@ set -exo
 
 echo "Starting app"
 
+echo "Installing requirements"
 # install required python packages from local tar
 tar xvf python_packages.tar.gz
 pip3 install pytz-*.whl numpy-*.whl pandas-*.whl
