@@ -39,7 +39,7 @@ def bcf_norm(ref_fasta, input_vcf):
     process = subprocess.Popen((
         f"zcat {input_vcf} | sed 's/AD,Number=./AD,Number=R/g' | "
         "sed 's/RPA,Number=./RPA,Number=R/g' | "
-        f"bcftools norm -f {ref_fasta} -m -any"
+        f"bcftools norm -f {ref_fasta} -m -both"
     ), shell=True, stdout=subprocess.PIPE)
 
     vcf_data = io.StringIO()
