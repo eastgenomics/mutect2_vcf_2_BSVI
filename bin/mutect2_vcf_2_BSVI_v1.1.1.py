@@ -37,8 +37,9 @@ def bcf_norm(ref_fasta, input_vcf):
 
     # call bcftools to normalise multiallelic sites
     process = subprocess.Popen((
-        f"zcat {input_vcf} | sed 's/AD,Number=./AD,Number=R/g' | "
-        "sed 's/RPA,Number=./RPA,Number=R/g' | "
+        f"zcat {input_vcf} | "
+        "sed 's/FORMAT=<ID=AD,Number=./FORMAT=<ID=AD,Number=R/g' | "
+        "sed 's/INFO=<ID=RPA,Number=./INFO=<ID=RPA,Number=R/g' | "
         f"bcftools norm -f {ref_fasta} -m -any"
     ), shell=True, stdout=subprocess.PIPE)
 
