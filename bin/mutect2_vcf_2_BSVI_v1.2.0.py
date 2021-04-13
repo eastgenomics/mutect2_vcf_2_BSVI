@@ -3,6 +3,9 @@ Script to modify VCFs from mutect2 for importing to BSVI.
 Multiallelic sites need splitting to individual biallelic records, and
 the genotype fields splitting from 0/0/1/0 -> 0/1 for BSVI to handle.
 
+Outputs vcf with split multiallelics and a tsv with formatted INFO column
+to individual columns.
+
 Requires bgzip & bcftools be installed and on path.
 
 Inputs:
@@ -86,18 +89,74 @@ def bcf_norm(ref_fasta, input_vcf):
     return vcf_header, vcf_df
 
 
-def write_file(input_vcf, vcf_header, vcf_df):
+def generate_tsv(vcf_df):
     """
-    Write modified vcf to file
+    Generates tsv file from modified vcf with INFO column split out to
+    individual columns. Expects 13 columns in the INFO field else will
+
+    Args:
+        - vcf_df (df): df of variants from vcf
+    
+    Returns:
+        - tsv_df (df): df of variants with split info column
+    """
+    info_cols = [
+        'GENE', 'VARIANT_CLASS', 'CONS', 'EXON', 'HGVSc', 'HGVSp',
+        'gnomAD_AF', 'SIFT', 'POLYPHEN', 'DB'
+    ]
+
+    # sense check correct annotation has been added to all rows else it
+    # gives an unhelpful pandas error on trying to split
+    assert all(vcf_df.INFO.str.count('\|') > 8), \
+        "Incorrectly formatted INFO field, some records have < 9 fields."
+
+    # splits info column to cols defined in info_cols, any missing
+    vcf_df[info_cols] = vcf_df['INFO'].str.split('|', 9, expand=True)
+
+    # remove info id from gene
+    vcf_df['GENE'] = vcf_df['GENE'].apply(lambda x: x.replace('CSQ=', ''))
+
+    # split messy db annotation field out to clinvar, cosmic & dbsnp cols
+    # have multiple fields and diff delimeters, split on everything & select
+    vcf_df['COSMIC'] = vcf_df['DB'].str.split(r'\&|\||,').apply(
+        lambda x: [y if y.startswith('COS') else '' for y in x ][0]
+    )
+    vcf_df['CLINVAR'] = vcf_df['DB'].str.split(r'\&|\||,').apply(
+        lambda x: [y if y.startswith('CM') else '' for y in x ][0]
+    )
+    vcf_df['dbSNP'] = vcf_df['DB'].str.split(r'\&|\||,').apply(
+        lambda x: [y if y.startswith('rs') else '' for y in x ][0]
+    )
+
+    # add interestingly formatted report text column
+    vcf_df['Report_text'] = vcf_df[vcf_df.columns.tolist()].apply(
+        lambda x: (
+            f"{x['GENE']} {x['VARIANT_CLASS']} variant in {x['EXON']} \\n"
+            f"{x['HGVSc']} \\n {x['HGVSp']} \\n COSMIC ID: {x['COSMIC']} \\n"
+            f"Allele Frequency: {x['gnomAD_AF']}"
+        ), axis=1
+    )
+
+    # drop unneeded columns
+    vcf_df = vcf_df.drop(['INFO', 'DB'], axis=1)
+
+    return vcf_df
+
+def write_files(input_vcf, vcf_header, vcf_df, tsv_df):
+    """
+    Write modified vcf and tsv df with split info field to files
 
     Args:
         - input_vcf (file): vcf file passed at cmd line
         - vcf_header (list): header lines read in from VCF
         - vcf_df (df): df of variants
+        - tsv_df (df): df of variants with split info column
 
     Outputs:
         - vcf file with modified multiallelic records
+        - tsv file with modified multialleic records and split info field
     """
+
     # set name for output vcf from input
     """
     Output vcf name comments:
@@ -112,7 +171,10 @@ def write_file(input_vcf, vcf_header, vcf_df):
     fname = str(Path(input_vcf).name).replace('.vcf', '_ms.vcf').rstrip(
         '.gz').replace('ngr_', '').replace('_markdup_recalibrated', '')
 
-    print(f'Writing to outfile: {fname}.gz')
+    tsv_fname = fname.replace('.vcf', '.tsv')
+
+    print(f'Writing vcf to outfile: {fname}.gz')
+    print(f'Writing tsv to outfile: {tsv_fname}')
 
     with open(fname, 'w') as f:
         for line in vcf_header:
@@ -122,8 +184,12 @@ def write_file(input_vcf, vcf_header, vcf_df):
     # apend variants to vcf & compress
     with open(fname, 'a') as f:
         vcf_df.to_csv(f, sep='\t', header=False, index=False)
-
+    
     subprocess.Popen(f'bgzip {fname}', shell=True)
+
+    # write tsv file
+    with open(tsv_fname, 'w') as tsv:
+        tsv_df.to_csv(tsv, sep='\t', header=True, index=False)
 
 
 if __name__ == "__main__":
@@ -144,4 +210,5 @@ if __name__ == "__main__":
     input_vcf = sys.argv[2]
 
     vcf_header, vcf_df = bcf_norm(ref_fasta, input_vcf)
-    write_file(input_vcf, vcf_header, vcf_df)
+    tsv_df = generate_tsv(vcf_df)
+    write_files(input_vcf, vcf_header, vcf_df, tsv_df)

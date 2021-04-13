@@ -43,6 +43,6 @@ To run with Swiss Army Knife app:
 
 ## What does this output?
 
-Modified VCF to import into BSVI.
+Modified VCF to import into BSVI, along with the split INFO .tsv file.
 
 [bcftools-url]: http://samtools.github.io/bcftools/bcftools.html#norm
