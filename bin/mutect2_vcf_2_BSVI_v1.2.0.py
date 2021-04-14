@@ -78,7 +78,7 @@ def mod_genotype(input_vcf):
     return vcf_header, vcf_df
 
 
-def generate_tsv(vcf_df):
+def generate_tsv(tsv_df):
     """
     Generates tsv file from modified vcf with INFO column split out to
     individual columns. Expects min. 9 '|' separated fields in INFO
@@ -92,12 +92,12 @@ def generate_tsv(vcf_df):
     """
     # sense check correct annotation has been added to all rows else it
     # gives an unhelpful pandas error on trying to split
-    assert all(vcf_df.INFO.str.count('\|') > 8), \
+    assert all(tsv_df.INFO.str.count('\|') > 8), \
         "Incorrectly formatted INFO field, some records have < 9 fields."
 
     # keep just the CSQ field from INFO column, use join instead of
     # using index in case of missing and being empty => index error
-    vcf_df['INFO'] = vcf_df['INFO'].str.split(';').apply(
+    tsv_df['INFO'] = tsv_df['INFO'].str.split(';').apply(
         lambda x: ''.join((y for y in x if y.startswith('CSQ=')))
     )
 
@@ -107,26 +107,26 @@ def generate_tsv(vcf_df):
     ]
 
     # splits info column to cols defined in info_cols
-    vcf_df[info_cols] = vcf_df['INFO'].str.split('|', 9, expand=True)    
+    tsv_df[info_cols] = tsv_df['INFO'].str.split('|', 9, expand=True)    
 
     # remove info id from gene
-    vcf_df['GENE'] = vcf_df['GENE'].apply(lambda x: x.replace('CSQ=', ''))
+    tsv_df['GENE'] = tsv_df['GENE'].apply(lambda x: x.replace('CSQ=', ''))
 
     # split messy DB annotation column out to clinvar, cosmic & dbsnp
     # cols have multiple fields and diff delimeters then join with ','
     # in case of having more than one entry
-    vcf_df['COSMIC'] = vcf_df['DB'].str.split(r'\&|\||,').apply(
+    tsv_df['COSMIC'] = tsv_df['DB'].str.split(r'\&|\||,').apply(
         lambda x: ','.join((y for y in x if y.startswith('COS')))
     )
-    vcf_df['CLINVAR'] = vcf_df['DB'].str.split(r'\&|\||,').apply(
+    tsv_df['CLINVAR'] = tsv_df['DB'].str.split(r'\&|\||,').apply(
         lambda x: ','.join((y for y in x if y.startswith('CM')))
     )
-    vcf_df['dbSNP'] = vcf_df['DB'].str.split(r'\&|\||,').apply(
+    tsv_df['dbSNP'] = tsv_df['DB'].str.split(r'\&|\||,').apply(
         lambda x: ','.join((y for y in x if y.startswith('rs')))
     )
 
     # add interestingly formatted report text column
-    vcf_df['Report_text'] = vcf_df[vcf_df.columns.tolist()].apply(
+    tsv_df['Report_text'] = tsv_df[tsv_df.columns.tolist()].apply(
         lambda x: (
             f"{x['GENE']} {x['VARIANT_CLASS']} variant "
             f"{'in exon ' + x['EXON'] if x['EXON'] else ''} \n"
@@ -138,9 +138,9 @@ def generate_tsv(vcf_df):
     )
 
     # drop unneeded columns
-    vcf_df = vcf_df.drop(['INFO', 'DB'], axis=1)
+    tsv_df = tsv_df.drop(['INFO', 'DB'], axis=1)
 
-    return vcf_df
+    return tsv_df
 
 def write_files(input_vcf, vcf_header, vcf_df, tsv_df):
     """
@@ -182,7 +182,10 @@ if __name__ == "__main__":
     assert len(sys.argv) == 2, 'Incorrect no. VCFs passed, requires one.'
 
     input_vcf = sys.argv[1]
-
     vcf_header, vcf_df = mod_genotype(input_vcf)
-    tsv_df = generate_tsv(vcf_df)
+
+    # copy variant df and modify appropriately for tsv
+    tsv_df = vcf_df.copy(deep=True)
+    tsv_df = generate_tsv(tsv_df)
+
     write_files(input_vcf, vcf_header, vcf_df, tsv_df)
