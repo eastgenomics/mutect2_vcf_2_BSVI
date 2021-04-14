@@ -95,15 +95,15 @@ def generate_tsv(vcf_df):
     assert all(vcf_df.INFO.str.count('\|') > 8), \
         "Incorrectly formatted INFO field, some records have < 9 fields."
 
-    # keep just the CSQ from INFO column, use join instead of using
-    # index in case of missing and being empty
+    # keep just the CSQ field from INFO column, use join instead of
+    # using index in case of missing and being empty => index error
     vcf_df['INFO'] = vcf_df['INFO'].str.split(';').apply(
         lambda x: ''.join((y for y in x if y.startswith('CSQ=')))
     )
 
     info_cols = [
-        'GENE', 'VARIANT_CLASS', 'CONS', 'EXON', 'HGVSc', 'HGVSp',
-        'gnomAD_AF', 'SIFT', 'POLYPHEN', 'DB'
+        'GENE', 'VARIANT_CLASS', 'CONS', 'EXON', 'HGVSc',
+        'HGVSp', 'gnomAD_AF', 'SIFT', 'POLYPHEN', 'DB'
     ]
 
     # splits info column to cols defined in info_cols
