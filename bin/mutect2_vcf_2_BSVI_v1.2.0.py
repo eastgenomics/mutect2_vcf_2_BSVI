@@ -106,7 +106,7 @@ def generate_tsv(vcf_df):
         lambda x: ''.join((y for y in x if y.startswith('CSQ=')))
     )
 
-    # splits info column to cols defined in info_cols, any missing
+    # splits info column to cols defined in info_cols
     vcf_df[info_cols] = vcf_df['INFO'].str.split('|', 9, expand=True)    
 
     # remove info id from gene
