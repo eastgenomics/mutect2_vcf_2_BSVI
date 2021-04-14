@@ -3,8 +3,6 @@ Script to modify VCFs from mutect2 for importing to BSVI.
 Multiallelic sites need splitting to individual biallelic records, and
 the genotype fields splitting from 0/0/1/0 -> 0/1 for BSVI to handle.
 
-Requires bgzip & bcftools be installed and on path.
-
 Inputs:
     - reference fasta file - required by bcftools norm
     - input VCF to be modified
@@ -23,7 +21,8 @@ import pandas as pd
 
 def bcf_norm(ref_fasta, input_vcf):
     """
-    Normalise multiallelic records using bcftools norm
+    Overwrite GT with 0/1 when it's derived from a multiallelic
+    e.g. 0/0/1/0 -> 0/1 and 0/0/0/1 -> 0/1
 
     Args:
         - ref_fasta (file): reference fasta file to use for bcftools norm
@@ -33,14 +32,10 @@ def bcf_norm(ref_fasta, input_vcf):
         - vcf_header (list): header lines read in from VCF
         - vcf_df (df): df of variants
     """
-    print("Calling bcftools")
 
-    # call bcftools to normalise multiallelic sites
+    # stream the vcf
     process = subprocess.Popen((
-        f"zcat {input_vcf} | "
-        "sed 's/FORMAT=<ID=AD,Number=./FORMAT=<ID=AD,Number=R/g' | "
-        "sed 's/INFO=<ID=RPA,Number=./INFO=<ID=RPA,Number=R/g' | "
-        f"bcftools norm -f {ref_fasta} -m -any"
+        f"cat {input_vcf} "
     ), shell=True, stdout=subprocess.PIPE)
 
     vcf_data = io.StringIO()
@@ -103,33 +98,27 @@ def write_file(input_vcf, vcf_header, vcf_df):
     Output vcf name comments:
         - Output vcf name shortened to keep only meaningful characters
         - Removing ngr_ prefix and markdup_recalibrated 
-        - Add _ms suffix to denote that vcf has multiallelic variants
-          split to separate lines e.g. 
-          Input vcf: ngr_1701389_S77_markdup_recalibrated_tnhaplotyper2.vcf.gz 
-          Output vcf: 1701389_S77_tnhaplotyper2_ms.vcf.gz
+        - Add .ms suffix to denote that vcf has multiallelic variants
+            split to separate lines e.g. 
+            Input vcf: 2100616_21025Z0056_BM_AML_MYE_F_EGG_S8_L006_markdup_recalibrated_tnhaplotyper2.filter.annotate.vcf
+            Output vcf: 2100616_21025Z0056_BM_AML_MYE_F_EGG_S8_L006_markdup_recalibrated_tnhaplotyper2.bsvi.vcf
     """
     
-    fname = str(Path(input_vcf).name).replace('.vcf', '_ms.vcf').rstrip(
-        '.gz').replace('ngr_', '').replace('_markdup_recalibrated', '')
+    fname = str(Path(input_vcf).name).replace('vepfilter', 'bsvi')
 
-    print(f'Writing to outfile: {fname}.gz')
+    print(f'Writing to outfile: {fname}')
 
     with open(fname, 'w') as f:
         for line in vcf_header:
             # write header to vcf
             f.write(line)
 
-    # apend variants to vcf & compress
+    # apend variants to vcf
     with open(fname, 'a') as f:
         vcf_df.to_csv(f, sep='\t', header=False, index=False)
 
-    subprocess.Popen(f'bgzip {fname}', shell=True)
-
 
 if __name__ == "__main__":
-
-    # check bcftools is installed and on path
-    assert which('bcftools'), 'bcftools is not installed / on path'
 
     # check only reference fasta and one vcf passed
     assert len(sys.argv) == 3, 'Incorrect no. VCFs passed, requires one.'
