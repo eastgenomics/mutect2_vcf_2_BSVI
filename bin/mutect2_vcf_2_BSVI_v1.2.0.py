@@ -6,9 +6,6 @@ genotype fields are split from 0/0/1/0 -> 0/1 for BSVI to handle.
 Outputs vcf with split multiallelics and a tsv with formatted INFO
 column to individual columns.
 
-Inputs:
-    - input VCF to be modified
-
 Jethro Rainford
 210311
 """
@@ -33,9 +30,7 @@ def mod_genotype(input_vcf):
         - vcf_header (list): header lines read in from VCF
         - vcf_df (df): df of variants
     """
-    print("Calling bcftools")
-
-    # stream the vcf
+    # read in vcf
     process = subprocess.Popen(
         f"cat {input_vcf} ", shell=True, stdout=subprocess.PIPE
     )
