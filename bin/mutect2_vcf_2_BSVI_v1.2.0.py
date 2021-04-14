@@ -90,11 +90,6 @@ def generate_tsv(vcf_df):
     Returns:
         - tsv_df (df): df of variants with split info column
     """
-    info_cols = [
-        'GENE', 'VARIANT_CLASS', 'CONS', 'EXON', 'HGVSc', 'HGVSp',
-        'gnomAD_AF', 'SIFT', 'POLYPHEN', 'DB'
-    ]
-
     # sense check correct annotation has been added to all rows else it
     # gives an unhelpful pandas error on trying to split
     assert all(vcf_df.INFO.str.count('\|') > 8), \
@@ -105,6 +100,11 @@ def generate_tsv(vcf_df):
     vcf_df['INFO'] = vcf_df['INFO'].str.split(';').apply(
         lambda x: ''.join((y for y in x if y.startswith('CSQ=')))
     )
+
+    info_cols = [
+        'GENE', 'VARIANT_CLASS', 'CONS', 'EXON', 'HGVSc', 'HGVSp',
+        'gnomAD_AF', 'SIFT', 'POLYPHEN', 'DB'
+    ]
 
     # splits info column to cols defined in info_cols
     vcf_df[info_cols] = vcf_df['INFO'].str.split('|', 9, expand=True)    
