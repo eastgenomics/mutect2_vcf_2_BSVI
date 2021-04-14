@@ -100,13 +100,19 @@ def generate_tsv(vcf_df):
     assert all(vcf_df.INFO.str.count('\|') > 8), \
         "Incorrectly formatted INFO field, some records have < 9 fields."
 
+    # keep just the CSQ from INFO column, use join instead of using
+    # index in case of missing and being empty
+    vcf_df['INFO'] = vcf_df['INFO'].str.split(';').apply(
+        lambda x: ''.join((y for y in x if y.startswith('CSQ=')))
+    )
+
     # splits info column to cols defined in info_cols, any missing
-    vcf_df[info_cols] = vcf_df['INFO'].str.split('|', 9, expand=True)
+    vcf_df[info_cols] = vcf_df['INFO'].str.split('|', 9, expand=True)    
 
     # remove info id from gene
     vcf_df['GENE'] = vcf_df['GENE'].apply(lambda x: x.replace('CSQ=', ''))
 
-    # split messy db annotation field out to clinvar, cosmic & dbsnp
+    # split messy DB annotation column out to clinvar, cosmic & dbsnp
     # cols have multiple fields and diff delimeters then join with ','
     # in case of having more than one entry
     vcf_df['COSMIC'] = vcf_df['DB'].str.split(r'\&|\||,').apply(
