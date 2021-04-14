@@ -1,15 +1,12 @@
 """
 Script to modify VCFs from mutect2 for importing to BSVI.
-Multiallelic sites need splitting to individual biallelic records, and
-the genotype fields splitting from 0/0/1/0 -> 0/1 for BSVI to handle.
+Multiallelic sites need splitting first with bcftools norm and then the
+genotype fields are split from 0/0/1/0 -> 0/1 for BSVI to handle.
 
-Outputs vcf with split multiallelics and a tsv with formatted INFO column
-to individual columns.
-
-Requires bgzip & bcftools be installed and on path.
+Outputs vcf with split multiallelics and a tsv with formatted INFO
+column to individual columns.
 
 Inputs:
-    - reference fasta file - required by bcftools norm
     - input VCF to be modified
 
 Jethro Rainford
@@ -24,12 +21,12 @@ import sys
 import pandas as pd
 
 
-def bcf_norm(ref_fasta, input_vcf):
+def mod_genotype(input_vcf):
     """
-    Normalise multiallelic records using bcftools norm
+    Overwrite GT with 0/1 when it's derived from a multiallelic
+    e.g. 0/0/1/0 -> 0/1 and 0/0/0/1 -> 0/1
 
     Args:
-        - ref_fasta (file): reference fasta file to use for bcftools norm
         - input_vcf (file): vcf file passed at cmd line
 
     Returns:
@@ -38,13 +35,10 @@ def bcf_norm(ref_fasta, input_vcf):
     """
     print("Calling bcftools")
 
-    # call bcftools to normalise multiallelic sites
-    process = subprocess.Popen((
-        f"zcat {input_vcf} | "
-        "sed 's/FORMAT=<ID=AD,Number=./FORMAT=<ID=AD,Number=R/g' | "
-        "sed 's/INFO=<ID=RPA,Number=./INFO=<ID=RPA,Number=R/g' | "
-        f"bcftools norm -f {ref_fasta} -m -any"
-    ), shell=True, stdout=subprocess.PIPE)
+    # stream the vcf
+    process = subprocess.Popen(
+        f"cat {input_vcf} ", shell=True, stdout=subprocess.PIPE
+    )
 
     vcf_data = io.StringIO()
 
@@ -92,7 +86,8 @@ def bcf_norm(ref_fasta, input_vcf):
 def generate_tsv(vcf_df):
     """
     Generates tsv file from modified vcf with INFO column split out to
-    individual columns. Expects 13 columns in the INFO field else will
+    individual columns. Expects min. 9 '|' separated fields in INFO
+    column to split out.
 
     Args:
         - vcf_df (df): df of variants from vcf
@@ -116,16 +111,17 @@ def generate_tsv(vcf_df):
     # remove info id from gene
     vcf_df['GENE'] = vcf_df['GENE'].apply(lambda x: x.replace('CSQ=', ''))
 
-    # split messy db annotation field out to clinvar, cosmic & dbsnp cols
-    # have multiple fields and diff delimeters, split on everything & select
+    # split messy db annotation field out to clinvar, cosmic & dbsnp
+    # cols have multiple fields and diff delimeters then join with ','
+    # in case of having more than one entry
     vcf_df['COSMIC'] = vcf_df['DB'].str.split(r'\&|\||,').apply(
-        lambda x: [y if y.startswith('COS') else '' for y in x ][0]
+        lambda x: ','.join((y for y in x if y.startswith('COS')))
     )
     vcf_df['CLINVAR'] = vcf_df['DB'].str.split(r'\&|\||,').apply(
-        lambda x: [y if y.startswith('CM') else '' for y in x ][0]
+        lambda x: ','.join((y for y in x if y.startswith('CM')))
     )
     vcf_df['dbSNP'] = vcf_df['DB'].str.split(r'\&|\||,').apply(
-        lambda x: [y if y.startswith('rs') else '' for y in x ][0]
+        lambda x: ','.join((y for y in x if y.startswith('rs')))
     )
 
     # add interestingly formatted report text column
@@ -156,37 +152,21 @@ def write_files(input_vcf, vcf_header, vcf_df, tsv_df):
         - vcf file with modified multiallelic records
         - tsv file with modified multialleic records and split info field
     """
+    vcf_fname = str(Path(input_vcf).name).replace('vepfilter', 'bsvi')
+    tsv_fname = vcf_fname.replace('.vcf', '.tsv')
 
-    # set name for output vcf from input
-    """
-    Output vcf name comments:
-        - Output vcf name shortened to keep only meaningful characters
-        - Removing ngr_ prefix and markdup_recalibrated 
-        - Add _ms suffix to denote that vcf has multiallelic variants
-          split to separate lines e.g. 
-          Input vcf: ngr_1701389_S77_markdup_recalibrated_tnhaplotyper2.vcf.gz 
-          Output vcf: 1701389_S77_tnhaplotyper2_ms.vcf.gz
-    """
-    
-    fname = str(Path(input_vcf).name).replace('.vcf', '_ms.vcf').rstrip(
-        '.gz').replace('ngr_', '').replace('_markdup_recalibrated', '')
-
-    tsv_fname = fname.replace('.vcf', '.tsv')
-
-    print(f'Writing vcf to outfile: {fname}.gz')
+    print(f'Writing vcf to outfile: {vcf_fname}')
     print(f'Writing tsv to outfile: {tsv_fname}')
 
-    with open(fname, 'w') as f:
+    with open(vcf_fname, 'w') as f:
         for line in vcf_header:
             # write header to vcf
             f.write(line)
 
-    # apend variants to vcf & compress
-    with open(fname, 'a') as f:
+    # apend variants to vcf
+    with open(vcf_fname, 'a') as f:
         vcf_df.to_csv(f, sep='\t', header=False, index=False)
     
-    subprocess.Popen(f'bgzip {fname}', shell=True)
-
     # write tsv file
     with open(tsv_fname, 'w') as tsv:
         tsv_df.to_csv(tsv, sep='\t', header=True, index=False)
@@ -194,21 +174,11 @@ def write_files(input_vcf, vcf_header, vcf_df, tsv_df):
 
 if __name__ == "__main__":
 
-    # check bcftools is installed and on path
-    assert which('bcftools'), 'bcftools is not installed / on path'
+    # check only one vcf passed
+    assert len(sys.argv) == 2, 'Incorrect no. VCFs passed, requires one.'
 
-    # check only reference fasta and one vcf passed
-    assert len(sys.argv) == 3, 'Incorrect no. VCFs passed, requires one.'
+    input_vcf = sys.argv[1]
 
-    # check reference fasta and vcf are passed correctly
-    assert '.fa' in sys.argv[1] and '.vcf' in sys.argv[2], (
-        'Files passed incorrectly, it should be:'
-        ' python3 mutect2_vcf_2_bsvi.py reference_fasta input_vcf'
-    )
-
-    ref_fasta = sys.argv[1]
-    input_vcf = sys.argv[2]
-
-    vcf_header, vcf_df = bcf_norm(ref_fasta, input_vcf)
+    vcf_header, vcf_df = mod_genotype(input_vcf)
     tsv_df = generate_tsv(vcf_df)
     write_files(input_vcf, vcf_header, vcf_df, tsv_df)
