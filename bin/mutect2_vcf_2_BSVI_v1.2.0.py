@@ -128,9 +128,12 @@ def generate_tsv(vcf_df):
     # add interestingly formatted report text column
     vcf_df['Report_text'] = vcf_df[vcf_df.columns.tolist()].apply(
         lambda x: (
-            f"{x['GENE']} {x['VARIANT_CLASS']} variant in exon {x['EXON']} \n"
-            f"{x['HGVSc']} \n{x['HGVSp']} \nCOSMIC ID : {x['COSMIC']} \n"
-            f"Allele Frequency: {x['gnomAD_AF']}"
+            f"{x['GENE']} {x['VARIANT_CLASS']} variant "
+            f"{'in exon ' + x['EXON'] if x['EXON'] else ''} \n"
+            f"HGVSc.: {x['HGVSc'] if x['HGVSc'] else 'None'} \n"
+            f"HGVSp.: {x['HGVSp'] if x['HGVSp'] else 'None'} \n"
+            f"COSMIC ID : {x['COSMIC'] if x['COSMIC'] else 'None'} \n"
+            f"Allele Frequency: {x['gnomAD_AF'] if x['gnomAD_AF'] else 'None'}"
         ), axis=1
     )
 
