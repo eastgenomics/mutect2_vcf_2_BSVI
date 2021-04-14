@@ -128,8 +128,8 @@ def generate_tsv(vcf_df):
     # add interestingly formatted report text column
     vcf_df['Report_text'] = vcf_df[vcf_df.columns.tolist()].apply(
         lambda x: (
-            f"{x['GENE']} {x['VARIANT_CLASS']} variant in {x['EXON']} \\n"
-            f"{x['HGVSc']} \\n {x['HGVSp']} \\n COSMIC ID: {x['COSMIC']} \\n"
+            f"{x['GENE']} {x['VARIANT_CLASS']} variant in exon {x['EXON']} \n"
+            f"{x['HGVSc']} \n{x['HGVSp']} \nCOSMIC ID : {x['COSMIC']} \n"
             f"Allele Frequency: {x['gnomAD_AF']}"
         ), axis=1
     )
@@ -154,7 +154,7 @@ def write_files(input_vcf, vcf_header, vcf_df, tsv_df):
         - tsv file with modified multialleic records and split info field
     """
     vcf_fname = str(Path(input_vcf).name).replace('vepfilter', 'bsvi')
-    tsv_fname = vcf_fname.replace('.vcf', '.tsv')
+    tsv_fname = vcf_fname.replace('bsvi.vcf', 'variantlist.tsv')
 
     print(f'Writing vcf to outfile: {vcf_fname}')
     print(f'Writing tsv to outfile: {tsv_fname}')
